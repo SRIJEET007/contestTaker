@@ -231,6 +231,92 @@
             margin-bottom: 20px;
         }
 
+        /* Custom Popup Styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .popup-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .popup-overlay.show .popup {
+            transform: scale(1);
+        }
+
+        .popup-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .popup-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .popup-message {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .popup-success {
+            color: #27ae60;
+        }
+
+        .popup-error {
+            color: #e74c3c;
+        }
+
+        .popup-info {
+            color: #667eea;
+        }
+
+        .popup-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .popup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
         @media (max-width: 768px) {
             .container {
                 width: 95%;
@@ -251,6 +337,16 @@
     </style>
 </head>
 <body>
+    <!-- Custom Popup -->
+    <div id="popupOverlay" class="popup-overlay">
+        <div class="popup">
+            <div id="popupIcon" class="popup-icon">🔔</div>
+            <div id="popupTitle" class="popup-title">Notification</div>
+            <div id="popupMessage" class="popup-message">This is a notification message.</div>
+            <button id="popupBtn" class="popup-btn" onclick="closePopup()">OK</button>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Login Screen -->
         <div id="loginScreen" class="login-screen">
@@ -320,9 +416,9 @@
             <button class="btn btn-secondary" onclick="logout()">Logout</button>
         </div>
     </div>
-
-    <!-- Load config before main script -->
+    
     <script src="config.js"></script>
+
     <script>
         let currentUser = null;
         let isAdmin = false;
@@ -331,6 +427,38 @@
         let contestTimer = null;
         let problems = [];
         let userScores = {};
+
+        // Popup functions
+        function showPopup(type, title, message, icon) {
+            document.getElementById('popupIcon').textContent = icon;
+            document.getElementById('popupTitle').textContent = title;
+            document.getElementById('popupMessage').textContent = message;
+            
+            const popup = document.querySelector('.popup');
+            const overlay = document.getElementById('popupOverlay');
+            
+            // Remove existing type classes
+            popup.classList.remove('popup-success', 'popup-error', 'popup-info');
+            // Add new type class
+            popup.classList.add(`popup-${type}`);
+            
+            overlay.classList.add('show');
+        }
+
+        function closePopup() {
+            document.getElementById('popupOverlay').classList.remove('show');
+        }
+
+        // Auto-close popup after 3 seconds for success/info messages
+        function showAutoClosePopup(type, title, message, icon) {
+            showPopup(type, title, message, icon);
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    closePopup();
+                }, 3000);
+            }
+        }
+
         window.onload = function() {
             loadData();
             checkUserSession();
@@ -402,7 +530,7 @@
         function loginUser() {
             const username = document.getElementById('username').value.trim();
             if (!username) {
-                alert('Please enter your name!');
+                showPopup('error', 'Invalid Input', 'Please enter your name!', '❌');
                 return;
             }
             
@@ -418,6 +546,7 @@
             
             saveData();
             showContestScreen();
+            showAutoClosePopup('success', 'Welcome!', `Hello ${username}! You've successfully joined the contest.`, '🎉');
         }
 
         function loginAdmin() {
@@ -429,12 +558,14 @@
                 isAdmin = true;
                 saveData();
                 showAdminScreen();
+                showAutoClosePopup('success', 'Admin Login Successful', 'Welcome to the admin panel!', '🔐');
             } else {
-                alert('Invalid admin credentials!');
+                showPopup('error', 'Authentication Failed', 'Invalid admin credentials! Please check your username and password.', '🚫');
             }
         }
 
         function logout() {
+            const wasAdmin = isAdmin;
             currentUser = null;
             isAdmin = false;
             if (contestTimer) {
@@ -446,6 +577,9 @@
             document.getElementById('username').value = '';
             document.getElementById('adminUsername').value = '';
             document.getElementById('adminPassword').value = '';
+            
+            const message = wasAdmin ? 'Admin logged out successfully!' : 'You have been logged out successfully!';
+            showAutoClosePopup('info', 'Logged Out', message, '👋');
         }
 
         function addProblemInput() {
@@ -477,7 +611,7 @@
             });
 
             if (newProblems.length === 0) {
-                alert('Please add at least one problem!');
+                showPopup('error', 'No Problems Added', 'Please add at least one problem before starting the contest!', '⚠️');
                 return;
             }
 
@@ -493,22 +627,54 @@
             });
 
             saveData();
-            alert(`Contest started with ${problems.length} problems for ${contestDuration} minutes!`);
+            
+            // Show popup to admin
+            showAutoClosePopup('success', 'Contest Started!', 
+                `Contest started successfully with ${problems.length} problems for ${contestDuration} minutes!`, '🚀');
+            
+            // Notify all contestants (simulate broadcast)
+            setTimeout(() => {
+                if (!isAdmin && contestStartTime) {
+                    showAutoClosePopup('info', 'Contest Started!', 
+                        `The contest has begun! You have ${contestDuration} minutes to solve ${problems.length} problems. Good luck!`, '🏁');
+                }
+            }, 100);
+            
             updateContestantsDisplay();
         }
 
         function endContest() {
+            if (!contestStartTime) {
+                showPopup('error', 'No Active Contest', 'There is no active contest to end!', '⚠️');
+                return;
+            }
+
             contestStartTime = null;
             if (contestTimer) {
                 clearInterval(contestTimer);
             }
             saveData();
-            alert('Contest ended!');
+            
+            // Show popup to admin
+            showAutoClosePopup('success', 'Contest Ended!', 
+                'The contest has been ended successfully. All participants have been notified.', '🏁');
+            
+            // Notify all contestants (simulate broadcast)
+            setTimeout(() => {
+                if (!isAdmin) {
+                    showAutoClosePopup('info', 'Contest Ended!', 
+                        'The contest has ended! Thank you for participating. Check your final scores.', '🎯');
+                }
+            }, 100);
+            
             updateContestantsDisplay();
         }
 
         function clearAllData() {
-            if (confirm('Are you sure you want to clear all data? This will reset everything!')) {
+            showPopup('info', 'Confirm Action', 'Are you sure you want to clear all data? This will reset everything and cannot be undone!', '🗑️');
+            
+            // Override the OK button for this specific case
+            document.getElementById('popupBtn').onclick = function() {
                 contestStartTime = null;
                 problems = [];
                 userScores = {};
@@ -517,8 +683,15 @@
                 }
                 saveData();
                 updateContestantsDisplay();
-                alert('All data cleared!');
-            }
+                closePopup();
+                
+                setTimeout(() => {
+                    showAutoClosePopup('success', 'Data Cleared', 'All contest data has been cleared successfully!', '✅');
+                }, 200);
+                
+                // Reset the button onclick
+                document.getElementById('popupBtn').onclick = closePopup;
+            };
         }
 
         function startTimer() {
@@ -554,6 +727,9 @@
             document.getElementById('contestEnded').classList.remove('hidden');
             document.getElementById('finalScore').textContent = 
                 `Your Final Score: ${userScores[currentUser]?.score || 0} points`;
+            
+            showAutoClosePopup('info', 'Time\'s Up!', 
+                `Contest time has ended! Your final score: ${userScores[currentUser]?.score || 0} points`, '⏰');
         }
 
         function updateContestDisplay() {
@@ -615,9 +791,11 @@
             if (solved) {
                 userScores[currentUser].score += 10;
                 userScores[currentUser].solvedProblems.add(problemIndex);
+                showAutoClosePopup('success', 'Problem Solved!', 'Great job! +10 points added to your score.', '🎉');
             } else {
                 userScores[currentUser].score -= 10;
                 userScores[currentUser].solvedProblems.delete(problemIndex);
+                showAutoClosePopup('info', 'Problem Unmarked', '10 points deducted from your score.', '↩️');
             }
             
             saveData();
@@ -640,6 +818,20 @@
                     contestantsDiv.appendChild(div);
                 });
         }
+
+        // Close popup when clicking outside
+        document.getElementById('popupOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+
+        // Close popup with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePopup();
+            }
+        });
     </script>
 </body>
 </html>
