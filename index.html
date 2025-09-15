@@ -420,6 +420,7 @@
     <script src="config.js"></script>
 
     <script>
+        // Globals
         let currentUser = null;
         let isAdmin = false;
         let contestStartTime = null;
@@ -427,6 +428,8 @@
         let contestTimer = null;
         let problems = [];
         let userScores = {};
+
+        const STORAGE_KEY = 'contestData';
 
         // Popup functions
         function showPopup(type, title, message, icon) {
@@ -449,7 +452,6 @@
             document.getElementById('popupOverlay').classList.remove('show');
         }
 
-        // Auto-close popup after 3 seconds for success/info messages
         function showAutoClosePopup(type, title, message, icon) {
             showPopup(type, title, message, icon);
             if (type === 'success' || type === 'info') {
@@ -459,46 +461,109 @@
             }
         }
 
+        // -------------------------
+        // Persistence (localStorage)
+        // -------------------------
+        function saveData() {
+            // Convert Sets to arrays for JSON
+            const serializableScores = {};
+            Object.entries(userScores).forEach(([uname, data]) => {
+                serializableScores[uname] = {
+                    score: data.score || 0,
+                    solvedProblems: Array.from(data.solvedProblems || [])
+                };
+            });
+
+            const data = {
+                contestStartTime,
+                contestDuration,
+                problems,
+                userScores: serializableScores,
+                currentUser,
+                isAdmin
+            };
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            // Also keep it in-memory for immediate access
+            window.contestData = data;
+        }
+
+        function loadData() {
+            // Priority: localStorage if present, otherwise in-memory fallback
+            const raw = localStorage.getItem(STORAGE_KEY) || (window.contestData ? JSON.stringify(window.contestData) : null);
+            if (!raw) return;
+
+            try {
+                const data = JSON.parse(raw);
+                contestStartTime = data.contestStartTime || null;
+                contestDuration = data.contestDuration || 60;
+                problems = data.problems || [];
+                userScores = {};
+                if (data.userScores) {
+                    Object.entries(data.userScores).forEach(([uname, d]) => {
+                        userScores[uname] = {
+                            score: d.score || 0,
+                            // rehydrate solvedProblems into a Set
+                            solvedProblems: new Set(d.solvedProblems || [])
+                        };
+                    });
+                }
+                currentUser = data.currentUser;
+                isAdmin = data.isAdmin || false;
+            } catch (e) {
+                console.error('Error loading contest data:', e);
+            }
+        }
+
+        // Keep tabs in sync: when another tab updates localStorage, reload data
+        window.addEventListener('storage', (e) => {
+            if (e.key === STORAGE_KEY) {
+                loadData();
+                // Update displays appropriately
+                updateContestantsDisplay();
+                if (currentUser && !isAdmin) {
+                    showContestScreen();
+                } else if (currentUser && isAdmin) {
+                    showAdminScreen();
+                } else {
+                    // if no logged-in user, nothing to show
+                }
+            }
+        });
+
+        // Utility to get solved count whether solvedProblems is a Set or an Array
+        function solvedCount(data) {
+            if (!data || !data.solvedProblems) return 0;
+            if (data.solvedProblems instanceof Set) return data.solvedProblems.size;
+            if (Array.isArray(data.solvedProblems)) return data.solvedProblems.length;
+            return 0;
+        }
+
+        function isProblemSolvedForUser(username, index) {
+            const data = userScores[username];
+            if (!data || !data.solvedProblems) return false;
+            if (data.solvedProblems instanceof Set) return data.solvedProblems.has(index);
+            if (Array.isArray(data.solvedProblems)) return data.solvedProblems.includes(index);
+            return false;
+        }
+
+        // Startup
         window.onload = function() {
             loadData();
             checkUserSession();
         };
 
-        function saveData() {  //data not lost after refresh.
-            const data = {
-                contestStartTime,
-                contestDuration,
-                problems,
-                userScores,
-                currentUser,
-                isAdmin
-            };
-            // Store in memory
-            window.contestData = data;
-        }
-
-        function loadData() {
-            if (window.contestData) {
-                const data = window.contestData;
-                contestStartTime = data.contestStartTime;
-                contestDuration = data.contestDuration || 60;
-                problems = data.problems || [];
-                userScores = data.userScores || {};
-                currentUser = data.currentUser;
-                isAdmin = data.isAdmin || false;
-            }
-        }
-
-        // Session management
+        // Session management & UI navigation
         function checkUserSession() {
             if (currentUser && !isAdmin) {
                 showContestScreen();
             } else if (currentUser && isAdmin) {
                 showAdminScreen();
+            } else {
+                showScreen('loginScreen');
             }
         }
 
-        // Screen navigation
         function showScreen(screenId) {
             document.querySelectorAll('.login-screen, .contest-screen, .admin-screen').forEach(screen => {
                 screen.classList.add('hidden');
@@ -506,13 +571,8 @@
             document.getElementById(screenId).classList.remove('hidden');
         }
 
-        function showAdminLogin() {
-            showScreen('adminLoginScreen');
-        }
-
-        function backToMain() {
-            showScreen('loginScreen');
-        }
+        function showAdminLogin() { showScreen('adminLoginScreen'); }
+        function backToMain() { showScreen('loginScreen'); }
 
         function showContestScreen() {
             showScreen('contestScreen');
@@ -527,6 +587,7 @@
             updateContestantsDisplay();
         }
 
+        // Login flows
         function loginUser() {
             const username = document.getElementById('username').value.trim();
             if (!username) {
@@ -543,7 +604,7 @@
                     solvedProblems: new Set()
                 };
             }
-            
+
             saveData();
             showContestScreen();
             showAutoClosePopup('success', 'Welcome!', `Hello ${username}! You've successfully joined the contest.`, '🎉');
@@ -553,7 +614,7 @@
             const username = document.getElementById('adminUsername').value;
             const password = document.getElementById('adminPassword').value;
             
-            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+            if (typeof ADMIN_CREDENTIALS !== 'undefined' && username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
                 currentUser = username;
                 isAdmin = true;
                 saveData();
@@ -582,6 +643,7 @@
             showAutoClosePopup('info', 'Logged Out', message, '👋');
         }
 
+        // Admin: problem inputs
         function addProblemInput() {
             const problemInputs = document.getElementById('problemInputs');
             const newInput = document.createElement('div');
@@ -598,6 +660,7 @@
             button.parentElement.remove();
         }
 
+        // Start / end contest
         function startContest() {
             const problemInputs = document.querySelectorAll('.problem-input');
             const newProblems = [];
@@ -619,6 +682,7 @@
             contestDuration = parseInt(document.getElementById('contestDuration').value) || 60;
             contestStartTime = Date.now();
 
+            // Reinitialize scores (keeping usernames)
             Object.keys(userScores).forEach(username => {
                 userScores[username] = {
                     score: 0,
@@ -632,7 +696,7 @@
             showAutoClosePopup('success', 'Contest Started!', 
                 `Contest started successfully with ${problems.length} problems for ${contestDuration} minutes!`, '🚀');
             
-            // Notify all contestants (simulate broadcast)
+            // Notify current tab's users (if not admin)
             setTimeout(() => {
                 if (!isAdmin && contestStartTime) {
                     showAutoClosePopup('info', 'Contest Started!', 
@@ -655,15 +719,11 @@
             }
             saveData();
             
-            // Show popup to admin
-            showAutoClosePopup('success', 'Contest Ended!', 
-                'The contest has been ended successfully. All participants have been notified.', '🏁');
+            showAutoClosePopup('success', 'Contest Ended!', 'The contest has been ended successfully. All participants have been notified.', '🏁');
             
-            // Notify all contestants (simulate broadcast)
             setTimeout(() => {
                 if (!isAdmin) {
-                    showAutoClosePopup('info', 'Contest Ended!', 
-                        'The contest has ended! Thank you for participating. Check your final scores.', '🎯');
+                    showAutoClosePopup('info', 'Contest Ended!', 'The contest has ended! Thank you for participating. Check your final scores.', '🎯');
                 }
             }, 100);
             
@@ -674,7 +734,9 @@
             showPopup('info', 'Confirm Action', 'Are you sure you want to clear all data? This will reset everything and cannot be undone!', '🗑️');
             
             // Override the OK button for this specific case
-            document.getElementById('popupBtn').onclick = function() {
+            const btn = document.getElementById('popupBtn');
+            const prevOnclick = btn.onclick;
+            btn.onclick = function() {
                 contestStartTime = null;
                 problems = [];
                 userScores = {};
@@ -690,10 +752,11 @@
                 }, 200);
                 
                 // Reset the button onclick
-                document.getElementById('popupBtn').onclick = closePopup;
+                btn.onclick = prevOnclick || closePopup;
             };
         }
 
+        // Timer
         function startTimer() {
             if (contestTimer) {
                 clearInterval(contestTimer);
@@ -732,10 +795,11 @@
                 `Contest time has ended! Your final score: ${userScores[currentUser]?.score || 0} points`, '⏰');
         }
 
+        // Contest display rendering
         function updateContestDisplay() {
             const userInfo = document.getElementById('userInfo');
             const score = userScores[currentUser]?.score || 0;
-            const solved = userScores[currentUser]?.solvedProblems?.size || 0;
+            const solved = solvedCount(userScores[currentUser]) || 0;
             userInfo.innerHTML = `
                 <div>Welcome, ${currentUser}!</div>
                 <div>Score: ${score} points | Problems Solved: ${solved}/${problems.length}</div>
@@ -764,10 +828,14 @@
             problems.forEach((problem, index) => {
                 const problemItem = document.createElement('div');
                 problemItem.className = 'problem-item';
-                const isSolved = userScores[currentUser]?.solvedProblems?.has(index);
+                const isSolved = isProblemSolvedForUser(currentUser, index);
+                
+                // Escape name and url minimally (simple safe output)
+                const safeName = String(problem.name).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const safeUrl = String(problem.url).replace(/"/g, "&quot;");
                 
                 problemItem.innerHTML = `
-                    <a href="${problem.url}" target="_blank" class="problem-link">${problem.name}</a>
+                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="problem-link">${safeName}</a>
                     <div class="problem-buttons">
                         ${isSolved 
                             ? `<button class="btn-unsolved" onclick="toggleProblem(${index}, false)">Mark Unsolved</button>`
@@ -788,18 +856,29 @@
                 };
             }
             
+            // Ensure solvedProblems is a Set
+            if (!(userScores[currentUser].solvedProblems instanceof Set)) {
+                userScores[currentUser].solvedProblems = new Set(userScores[currentUser].solvedProblems || []);
+            }
+            
             if (solved) {
-                userScores[currentUser].score += 10;
-                userScores[currentUser].solvedProblems.add(problemIndex);
-                showAutoClosePopup('success', 'Problem Solved!', 'Great job! +10 points added to your score.', '🎉');
+                // avoid double adding / double scoring
+                if (!userScores[currentUser].solvedProblems.has(problemIndex)) {
+                    userScores[currentUser].score += 10;
+                    userScores[currentUser].solvedProblems.add(problemIndex);
+                    showAutoClosePopup('success', 'Problem Solved!', 'Great job! +10 points added to your score.', '🎉');
+                }
             } else {
-                userScores[currentUser].score -= 10;
-                userScores[currentUser].solvedProblems.delete(problemIndex);
-                showAutoClosePopup('info', 'Problem Unmarked', '10 points deducted from your score.', '↩️');
+                if (userScores[currentUser].solvedProblems.has(problemIndex)) {
+                    userScores[currentUser].score -= 10;
+                    userScores[currentUser].solvedProblems.delete(problemIndex);
+                    showAutoClosePopup('info', 'Problem Unmarked', '10 points deducted from your score.', '↩️');
+                }
             }
             
             saveData();
             updateContestDisplay();
+            updateContestantsDisplay();
         }
 
         function updateContestantsDisplay() {
@@ -813,7 +892,7 @@
                     div.className = 'contestant-item';
                     div.innerHTML = `
                         <span>${username}</span>
-                        <span>${data.score || 0} points (${data.solvedProblems?.size || 0}/${problems.length} solved)</span>
+                        <span>${data.score || 0} points (${solvedCount(data)}/${problems.length} solved)</span>
                     `;
                     contestantsDiv.appendChild(div);
                 });
