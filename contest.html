@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contest App</title>
+    <style>
+        /* --- your CSS unchanged --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            width: 90%;
+            max-width: 800px;
+            min-height: 500px;
+        }
+
+        .login-screen, .contest-screen, .admin-screen {
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 2rem;
+            padding: 15px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 10px;
+        }
+
+        .problem-list {
+            display: grid;
+            gap: 15px;
+            margin: 2rem 0;
+        }
+
+        .problem-item {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #e1e1e1;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .problem-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .problem-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .problem-link:hover {
+            text-decoration: underline;
+        }
+
+        .problem-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-solve {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-unsolved {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-solve:hover, .btn-unsolved:hover {
+            transform: scale(1.1);
+        }
+
+        .score-display {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .contestants-list {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .contestant-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e1e1e1;
+        }
+
+        .contestant-item:last-child {
+            border-bottom: none;
+        }
+
+        .admin-controls {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .problem-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .problem-input input {
+            flex: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .contest-ended {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .contest-ended h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 1rem;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .problem-item {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="login-screen">
+            <h1>🏆 Contest Arena</h1>
+            <div class="input-group">
+                <label for="username">Enter Your Name:</label>
+                <input type="text" id="username" placeholder="Your name here...">
+            </div>
+            <button class="btn" onclick="loginUser()">Join Contest</button>
+            <button class="btn btn-secondary" onclick="showAdminLogin()">Admin Login</button>
+        </div>
+
+        <!-- Admin Login -->
+        <div id="adminLoginScreen" class="login-screen hidden">
+            <h1>🔐 Admin Access</h1>
+            <div class="input-group">
+                <label for="adminUsername">Username:</label>
+                <input type="text" id="adminUsername" placeholder="admin">
+            </div>
+            <div class="input-group">
+                <label for="adminPassword">Password:</label>
+                <input type="password" id="adminPassword" placeholder="password">
+            </div>
+            <button class="btn" onclick="loginAdmin()">Login as Admin</button>
+            <button class="btn btn-secondary" onclick="backToMain()">Back</button>
+        </div>
+
+        <!-- Contest Screen -->
+        <div id="contestScreen" class="contest-screen hidden">
+            <h1>🚀 Contest in Progress</h1>
+            <div id="userInfo" class="score-display"></div>
+            <div id="timer" class="timer"></div>
+            <div id="problemsList" class="problem-list"></div>
+            <div id="contestEnded" class="contest-ended hidden">
+                <h2>🎯 Contest Ended!</h2>
+                <div id="finalScore"></div>
+            </div>
+            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        </div>
+
+        <!-- Admin Screen -->
+        <div id="adminScreen" class="admin-screen hidden">
+            <h1>⚙️ Admin Panel</h1>
+            <div class="admin-controls">
+                <div class="input-group">
+                    <label for="contestDuration">Contest Duration (minutes):</label>
+                    <input type="text" id="contestDuration" placeholder="60" value="60">
+                </div>
+                <div class="input-group">
+                    <label>Add Problems:</label>
+                    <div id="problemInputs">
+                        <div class="problem-input">
+                            <input type="text" placeholder="Problem name" class="problem-name">
+                            <input type="text" placeholder="Problem URL" class="problem-url">
+                            <button class="btn" onclick="addProblemInput()">+</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="startContest()">Start Contest</button>
+                <button class="btn btn-secondary" onclick="endContest()">End Contest</button>
+                <button class="btn btn-secondary" onclick="clearAllData()">Clear All Data</button>
+            </div>
+            <div id="contestantsList" class="contestants-list">
+                <h3>📊 Current Contestants:</h3>
+                <div id="contestants"></div>
+            </div>
+            <button class="btn btn-secondary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Load config before main script -->
+    <script src="config.js"></script>
+    <script>
+        let currentUser = null;
+        let isAdmin = false;
+        let contestStartTime = null;
+        let contestDuration = 60; 
+        let contestTimer = null;
+        let problems = [];
+        let userScores = {};
+        window.onload = function() {
+            loadData();
+            checkUserSession();
+        };
+
+        function saveData() {  //data not lost after refresh.
+            const data = {
+                contestStartTime,
+                contestDuration,
+                problems,
+                userScores,
+                currentUser,
+                isAdmin
+            };
+            // Store in memory
+            window.contestData = data;
+        }
+
+        function loadData() {
+            if (window.contestData) {
+                const data = window.contestData;
+                contestStartTime = data.contestStartTime;
+                contestDuration = data.contestDuration || 60;
+                problems = data.problems || [];
+                userScores = data.userScores || {};
+                currentUser = data.currentUser;
+                isAdmin = data.isAdmin || false;
+            }
+        }
+
+        // Session management
+        function checkUserSession() {
+            if (currentUser && !isAdmin) {
+                showContestScreen();
+            } else if (currentUser && isAdmin) {
+                showAdminScreen();
+            }
+        }
+
+        // Screen navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.login-screen, .contest-screen, .admin-screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showAdminLogin() {
+            showScreen('adminLoginScreen');
+        }
+
+        function backToMain() {
+            showScreen('loginScreen');
+        }
+
+        function showContestScreen() {
+            showScreen('contestScreen');
+            updateContestDisplay();
+            if (contestStartTime) {
+                startTimer();
+            }
+        }
+
+        function showAdminScreen() {
+            showScreen('adminScreen');
+            updateContestantsDisplay();
+        }
+
+        function loginUser() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert('Please enter your name!');
+                return;
+            }
+            
+            currentUser = username;
+            isAdmin = false;
+            
+            if (!userScores[username]) {
+                userScores[username] = {
+                    score: 0,
+                    solvedProblems: new Set()
+                };
+            }
+            
+            saveData();
+            showContestScreen();
+        }
+
+        function loginAdmin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                currentUser = username;
+                isAdmin = true;
+                saveData();
+                showAdminScreen();
+            } else {
+                alert('Invalid admin credentials!');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            isAdmin = false;
+            if (contestTimer) {
+                clearInterval(contestTimer);
+            }
+            saveData();
+            showScreen('loginScreen');
+            
+            document.getElementById('username').value = '';
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function addProblemInput() {
+            const problemInputs = document.getElementById('problemInputs');
+            const newInput = document.createElement('div');
+            newInput.className = 'problem-input';
+            newInput.innerHTML = `
+                <input type="text" placeholder="Problem name" class="problem-name">
+                <input type="text" placeholder="Problem URL" class="problem-url">
+                <button class="btn" onclick="removeProblemInput(this)">-</button>
+            `;
+            problemInputs.appendChild(newInput);
+        }
+
+        function removeProblemInput(button) {
+            button.parentElement.remove();
+        }
+
+        function startContest() {
+            const problemInputs = document.querySelectorAll('.problem-input');
+            const newProblems = [];
+            
+            problemInputs.forEach(input => {
+                const name = input.querySelector('.problem-name').value.trim();
+                const url = input.querySelector('.problem-url').value.trim();
+                if (name && url) {
+                    newProblems.push({ name, url });
+                }
+            });
+
+            if (newProblems.length === 0) {
+                alert('Please add at least one problem!');
+                return;
+            }
+
+            problems = newProblems;
+            contestDuration = parseInt(document.getElementById('contestDuration').value) || 60;
+            contestStartTime = Date.now();
+
+            Object.keys(userScores).forEach(username => {
+                userScores[username] = {
+                    score: 0,
+                    solvedProblems: new Set()
+                };
+            });
+
+            saveData();
+            alert(`Contest started with ${problems.length} problems for ${contestDuration} minutes!`);
+            updateContestantsDisplay();
+        }
+
+        function endContest() {
+            contestStartTime = null;
+            if (contestTimer) {
+                clearInterval(contestTimer);
+            }
+            saveData();
+            alert('Contest ended!');
+            updateContestantsDisplay();
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This will reset everything!')) {
+                contestStartTime = null;
+                problems = [];
+                userScores = {};
+                if (contestTimer) {
+                    clearInterval(contestTimer);
+                }
+                saveData();
+                updateContestantsDisplay();
+                alert('All data cleared!');
+            }
+        }
+
+        function startTimer() {
+            if (contestTimer) {
+                clearInterval(contestTimer);
+            }
+            
+            contestTimer = setInterval(() => {
+                const elapsed = Date.now() - contestStartTime;
+                const remaining = (contestDuration * 60 * 1000) - elapsed;
+                
+                if (remaining <= 0) {
+                    endContestForUser();
+                } else {
+                    updateTimerDisplay(remaining);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(remaining) {
+            const minutes = Math.floor(remaining / (60 * 1000));
+            const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+            document.getElementById('timer').textContent = 
+                `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function endContestForUser() {
+            if (contestTimer) {
+                clearInterval(contestTimer);
+            }
+            document.getElementById('problemsList').innerHTML = '';
+            document.getElementById('timer').textContent = 'Contest Ended!';
+            document.getElementById('contestEnded').classList.remove('hidden');
+            document.getElementById('finalScore').textContent = 
+                `Your Final Score: ${userScores[currentUser]?.score || 0} points`;
+        }
+
+        function updateContestDisplay() {
+            const userInfo = document.getElementById('userInfo');
+            const score = userScores[currentUser]?.score || 0;
+            const solved = userScores[currentUser]?.solvedProblems?.size || 0;
+            userInfo.innerHTML = `
+                <div>Welcome, ${currentUser}!</div>
+                <div>Score: ${score} points | Problems Solved: ${solved}/${problems.length}</div>
+            `;
+            if (!contestStartTime) {
+                document.getElementById('problemsList').innerHTML = 
+                    '<div class="contest-ended"><h2>No active contest</h2><p>Wait for admin to start the contest</p></div>';
+                document.getElementById('timer').textContent = 'Waiting for contest to start...';
+                return;
+            }
+
+            const elapsed = Date.now() - contestStartTime;
+            const remaining = (contestDuration * 60 * 1000) - elapsed;
+            
+            if (remaining <= 0) {
+                endContestForUser();
+                return;
+            }
+
+            updateTimerDisplay(remaining);
+            startTimer();
+
+            const problemsList = document.getElementById('problemsList');
+            problemsList.innerHTML = '';
+
+            problems.forEach((problem, index) => {
+                const problemItem = document.createElement('div');
+                problemItem.className = 'problem-item';
+                const isSolved = userScores[currentUser]?.solvedProblems?.has(index);
+                
+                problemItem.innerHTML = `
+                    <a href="${problem.url}" target="_blank" class="problem-link">${problem.name}</a>
+                    <div class="problem-buttons">
+                        ${isSolved 
+                            ? `<button class="btn-unsolved" onclick="toggleProblem(${index}, false)">Mark Unsolved</button>`
+                            : `<button class="btn-solve" onclick="toggleProblem(${index}, true)">Mark Solved</button>`
+                        }
+                    </div>
+                `;
+                
+                problemsList.appendChild(problemItem);
+            });
+        }
+
+        function toggleProblem(problemIndex, solved) {
+            if (!userScores[currentUser]) {
+                userScores[currentUser] = {
+                    score: 0,
+                    solvedProblems: new Set()
+                };
+            }
+            
+            if (solved) {
+                userScores[currentUser].score += 10;
+                userScores[currentUser].solvedProblems.add(problemIndex);
+            } else {
+                userScores[currentUser].score -= 10;
+                userScores[currentUser].solvedProblems.delete(problemIndex);
+            }
+            
+            saveData();
+            updateContestDisplay();
+        }
+
+        function updateContestantsDisplay() {
+            const contestantsDiv = document.getElementById('contestants');
+            contestantsDiv.innerHTML = '';
+            
+            Object.entries(userScores)
+                .sort(([, a], [, b]) => (b.score || 0) - (a.score || 0))
+                .forEach(([username, data]) => {
+                    const div = document.createElement('div');
+                    div.className = 'contestant-item';
+                    div.innerHTML = `
+                        <span>${username}</span>
+                        <span>${data.score || 0} points (${data.solvedProblems?.size || 0}/${problems.length} solved)</span>
+                    `;
+                    contestantsDiv.appendChild(div);
+                });
+        }
+    </script>
+</body>
+</html>
