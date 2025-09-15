@@ -1,916 +1,463 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contest App</title>
-    <style>
-        /* --- your CSS unchanged --- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Contest — 2hr</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#6ee7b7;
+      --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(180deg,#081025 0%, #07192a 100%);
+      color:#e6eef6;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px;
+    }
+    .container{
+      max-width:1000px;
+      margin:0 auto;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:18px;
+    }
+    header h1{
+      font-size:20px;
+      margin:0;
+      letter-spacing:0.2px;
+    }
+    header .meta{color:var(--muted); font-size:13px;}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+      padding:18px;
+      border-radius:12px;
+      box-shadow:0 6px 18px rgba(2,6,23,0.6);
+    }
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .btn{
+      background:var(--accent);
+      color:#022;
+      font-weight:600;
+      padding:8px 12px;
+      border-radius:10px;
+      border:0;
+      cursor:pointer;
+      box-shadow:0 6px 14px rgba(110,231,183,0.12);
+    }
+    .btn.ghost{
+      background:transparent;
+      color:var(--accent);
+      border:1px solid rgba(110,231,183,0.12);
+      box-shadow:none;
+    }
+    .timer{
+      font-weight:700;
+      font-size:18px;
+      padding:8px 12px;
+      border-radius:10px;
+      background:var(--glass);
+      color:var(--accent);
+      min-width:160px;
+      text-align:center;
+    }
+    .problems{
+      margin-top:14px;
+      display:grid;
+      gap:10px;
+    }
+    .prob{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px;
+      border-radius:10px;
+      background:linear-gradient(90deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .prob .left{
+      flex:1;
+      min-width:0;
+    }
+    .prob a{
+      color:#e6f9f0;
+      text-decoration:none;
+      font-weight:600;
+      display:inline-block;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:80%;
+    }
+    .prob small{ display:block; color:var(--muted); font-size:13px; margin-top:4px;}
+    .prob .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .mark-btn{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:var(--muted);
+      padding:6px 8px;
+      border-radius:8px;
+      cursor:pointer;
+      min-width:88px;
+    }
+    .mark-btn.done{
+      background:rgba(110,231,183,0.12);
+      border-color:rgba(110,231,183,0.18);
+      color:var(--accent);
+      font-weight:600;
+    }
+    .progress{
+      margin-top:12px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .progress .bar{
+      height:10px;
+      background:rgba(255,255,255,0.03);
+      flex:1;
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .progress .bar > i{
+      display:block;
+      width:0%;
+      height:100%;
+      background:linear-gradient(90deg, rgba(110,231,183,0.12), rgba(110,231,183,0.22));
+    }
+    .muted{
+      color:var(--muted);
+      font-size:13px;
+    }
+    .notice{
+      margin-top:12px;
+      padding:10px;
+      border-radius:8px;
+      background:rgba(255,255,255,0.02);
+      color:var(--muted);
+      font-size:13px;
+    }
+    footer{
+      margin-top:18px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .small{
+      font-size:12px;
+      color:var(--muted)
+    }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    /* responsive */
+    @media (max-width:640px){
+      header{flex-direction:column; align-items:flex-start; gap:8px}
+      .timer{min-width:unset}
+      .prob a{max-width:100%}
+    }
 
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            width: 90%;
-            max-width: 800px;
-            min-height: 500px;
-        }
-
-        .login-screen, .contest-screen, .admin-screen {
-            text-align: center;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 2rem;
-            font-size: 2.5rem;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #555;
-            font-weight: 600;
-        }
-
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e1e1;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.8);
-        }
-
-        input[type="text"]:focus, input[type="password"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-        }
-
-        .timer {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #ff6b6b;
-            margin-bottom: 2rem;
-            padding: 15px;
-            background: rgba(255, 107, 107, 0.1);
-            border-radius: 10px;
-        }
-
-        .problem-list {
-            display: grid;
-            gap: 15px;
-            margin: 2rem 0;
-        }
-
-        .problem-item {
-            background: rgba(255, 255, 255, 0.8);
-            border: 2px solid #e1e1e1;
-            border-radius: 15px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .problem-item:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .problem-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 18px;
-        }
-
-        .problem-link:hover {
-            text-decoration: underline;
-        }
-
-        .problem-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-solve {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-unsolved {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-solve:hover, .btn-unsolved:hover {
-            transform: scale(1.1);
-        }
-
-        .score-display {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .contestants-list {
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .contestant-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e1e1e1;
-        }
-
-        .contestant-item:last-child {
-            border-bottom: none;
-        }
-
-        .admin-controls {
-            display: grid;
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .problem-input {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .problem-input input {
-            flex: 1;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .contest-ended {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255, 107, 107, 0.1);
-            border-radius: 15px;
-            margin: 20px 0;
-        }
-
-        .contest-ended h2 {
-            color: #e74c3c;
-            margin-bottom: 20px;
-        }
-
-        /* Custom Popup Styles */
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .popup-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .popup {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            transform: scale(0.8);
-            transition: all 0.3s ease;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .popup-overlay.show .popup {
-            transform: scale(1);
-        }
-
-        .popup-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-
-        .popup-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .popup-message {
-            font-size: 1rem;
-            color: #666;
-            margin-bottom: 25px;
-            line-height: 1.5;
-        }
-
-        .popup-success {
-            color: #27ae60;
-        }
-
-        .popup-error {
-            color: #e74c3c;
-        }
-
-        .popup-info {
-            color: #667eea;
-        }
-
-        .popup-btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .popup-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                width: 95%;
-                padding: 1rem;
-                margin: 10px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .problem-item {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-        }
-    </style>
+  </style>
 </head>
 <body>
-    <!-- Custom Popup -->
-    <div id="popupOverlay" class="popup-overlay">
-        <div class="popup">
-            <div id="popupIcon" class="popup-icon">🔔</div>
-            <div id="popupTitle" class="popup-title">Notification</div>
-            <div id="popupMessage" class="popup-message">This is a notification message.</div>
-            <button id="popupBtn" class="popup-btn" onclick="closePopup()">OK</button>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Simple Contest — 2 hour fixed</h1>
+        <div class="meta">Edit the problems list in the source (see JS) — each user gets 2 hours when they press Start.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="timer" class="timer">Not started</div>
+        <button id="startBtn" class="btn">Start Contest</button>
+        <button id="resetBtn" class="btn ghost" title="Reset local progress (for testing)">Reset</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="topbar">
+        <div style="flex:1">
+          <div class="muted">Problems (edit `PROBLEMS` array in the file)</div>
         </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="muted">Solved: <strong id="solvedCount">0</strong>/<span id="totalCount">0</span></div>
+          <button id="copyLink" class="btn ghost" title="Copy page link">Copy link</button>
+        </div>
+      </div>
+
+      <div class="problems" id="problemsList" aria-live="polite" style="margin-top:12px">
+        <!-- problems inserted here -->
+      </div>
+
+      <div class="progress">
+        <div class="bar" aria-hidden="true"><i id="progressFill" style="width:0%"></i></div>
+        <div class="small" id="percentText">0%</div>
+      </div>
+
+      <div class="notice" id="notice">
+        This is a static single-file contest page. Mark problems as done as you solve them. When your 2-hour timer ends the page will lock.
+      </div>
     </div>
 
-    <div class="container">
-        <!-- Login Screen -->
-        <div id="loginScreen" class="login-screen">
-            <h1>🏆 Contest Arena</h1>
-            <div class="input-group">
-                <label for="username">Enter Your Name:</label>
-                <input type="text" id="username" placeholder="Your name here...">
-            </div>
-            <button class="btn" onclick="loginUser()">Join Contest</button>
-            <button class="btn btn-secondary" onclick="showAdminLogin()">Admin Login</button>
-        </div>
+    <footer>
+      <div class="small">Tip: open problems in new tabs, solve there, then mark them done here.</div>
+      <div class="small">Hosted static. Local progress stored only in your browser (<code>localStorage</code>).</div>
+    </footer>
+  </div>
 
-        <!-- Admin Login -->
-        <div id="adminLoginScreen" class="login-screen hidden">
-            <h1>🔐 Admin Access</h1>
-            <div class="input-group">
-                <label for="adminUsername">Username:</label>
-                <input type="text" id="adminUsername" placeholder="admin">
-            </div>
-            <div class="input-group">
-                <label for="adminPassword">Password:</label>
-                <input type="password" id="adminPassword" placeholder="password">
-            </div>
-            <button class="btn" onclick="loginAdmin()">Login as Admin</button>
-            <button class="btn btn-secondary" onclick="backToMain()">Back</button>
-        </div>
+<script>
+/*
+  === EDIT THIS LIST ===
+  Add or remove problems in this array. Each item: { name: "Name", url: "https://..." }
+  Only change the array below to set contest problems.
+*/
+const PROBLEMS = [
+  { name: "A - Example Problem 1", url: "https://codeforces.com/problemset/problem/1/A" },
+  { name: "B - Example Problem 2", url: "https://codeforces.com/problemset/problem/2/A" },
+  { name: "C - Example Problem 3", url: "https://codeforces.com/problemset/problem/3/A" }
+];
+/* === end editable list === */
 
-        <!-- Contest Screen -->
-        <div id="contestScreen" class="contest-screen hidden">
-            <h1>🚀 Contest in Progress</h1>
-            <div id="userInfo" class="score-display"></div>
-            <div id="timer" class="timer"></div>
-            <div id="problemsList" class="problem-list"></div>
-            <div id="contestEnded" class="contest-ended hidden">
-                <h2>🎯 Contest Ended!</h2>
-                <div id="finalScore"></div>
-            </div>
-            <button class="btn btn-secondary" onclick="logout()">Logout</button>
-        </div>
+const CONTEST_DURATION_MS = 2 * 60 * 60 * 1000; // 2 hours in ms
+const STORAGE_PREFIX = "simple_contest_v1_";
+const KEY_START = STORAGE_PREFIX + "start_ts";
+const KEY_MARKS = STORAGE_PREFIX + "marks"; // JSON object { idx: true }
 
-        <!-- Admin Screen -->
-        <div id="adminScreen" class="admin-screen hidden">
-            <h1>⚙️ Admin Panel</h1>
-            <div class="admin-controls">
-                <div class="input-group">
-                    <label for="contestDuration">Contest Duration (minutes):</label>
-                    <input type="text" id="contestDuration" placeholder="60" value="60">
-                </div>
-                <div class="input-group">
-                    <label>Add Problems:</label>
-                    <div id="problemInputs">
-                        <div class="problem-input">
-                            <input type="text" placeholder="Problem name" class="problem-name">
-                            <input type="text" placeholder="Problem URL" class="problem-url">
-                            <button class="btn" onclick="addProblemInput()">+</button>
-                        </div>
-                    </div>
-                </div>
-                <button class="btn" onclick="startContest()">Start Contest</button>
-                <button class="btn btn-secondary" onclick="endContest()">End Contest</button>
-                <button class="btn btn-secondary" onclick="clearAllData()">Clear All Data</button>
-            </div>
-            <div id="contestantsList" class="contestants-list">
-                <h3>📊 Current Contestants:</h3>
-                <div id="contestants"></div>
-            </div>
-            <button class="btn btn-secondary" onclick="logout()">Logout</button>
-        </div>
-    </div>
-    
-    <script src="config.js"></script>
+const el = {
+  timer: document.getElementById('timer'),
+  startBtn: document.getElementById('startBtn'),
+  resetBtn: document.getElementById('resetBtn'),
+  problemsList: document.getElementById('problemsList'),
+  solvedCount: document.getElementById('solvedCount'),
+  totalCount: document.getElementById('totalCount'),
+  progressFill: document.getElementById('progressFill'),
+  percentText: document.getElementById('percentText'),
+  notice: document.getElementById('notice'),
+  copyLink: document.getElementById('copyLink')
+};
 
-    <script>
-        // Globals
-        let currentUser = null;
-        let isAdmin = false;
-        let contestStartTime = null;
-        let contestDuration = 60; 
-        let contestTimer = null;
-        let problems = [];
-        let userScores = {};
+let startTs = loadStartTs();
+let marks = loadMarks();
 
-        const STORAGE_KEY = 'contestData';
+function loadStartTs(){
+  const v = localStorage.getItem(KEY_START);
+  return v ? parseInt(v,10) : null;
+}
+function saveStartTs(ts){
+  if(ts==null) localStorage.removeItem(KEY_START);
+  else localStorage.setItem(KEY_START, String(ts));
+  startTs = ts;
+}
+function loadMarks(){
+  try{
+    const v = localStorage.getItem(KEY_MARKS);
+    return v ? JSON.parse(v) : {};
+  }catch(e){ return {}; }
+}
+function saveMarks(m){
+  localStorage.setItem(KEY_MARKS, JSON.stringify(m));
+  marks = m;
+}
 
-        // Popup functions
-        function showPopup(type, title, message, icon) {
-            document.getElementById('popupIcon').textContent = icon;
-            document.getElementById('popupTitle').textContent = title;
-            document.getElementById('popupMessage').textContent = message;
-            
-            const popup = document.querySelector('.popup');
-            const overlay = document.getElementById('popupOverlay');
-            
-            // Remove existing type classes
-            popup.classList.remove('popup-success', 'popup-error', 'popup-info');
-            // Add new type class
-            popup.classList.add(`popup-${type}`);
-            
-            overlay.classList.add('show');
-        }
+function renderProblems(){
+  el.problemsList.innerHTML = '';
+  PROBLEMS.forEach((p, idx) => {
+    const row = document.createElement('div');
+    row.className = 'prob';
+    row.dataset.idx = idx;
+    const left = document.createElement('div');
+    left.className = 'left';
+    const a = document.createElement('a');
+    a.href = p.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = p.name;
+    const small = document.createElement('small');
+    small.textContent = p.url;
+    left.appendChild(a);
+    left.appendChild(small);
 
-        function closePopup() {
-            document.getElementById('popupOverlay').classList.remove('show');
-        }
+    const actions = document.createElement('div');
+    actions.className = 'actions';
 
-        function showAutoClosePopup(type, title, message, icon) {
-            showPopup(type, title, message, icon);
-            if (type === 'success' || type === 'info') {
-                setTimeout(() => {
-                    closePopup();
-                }, 3000);
-            }
-        }
+    const markBtn = document.createElement('button');
+    markBtn.className = 'mark-btn';
+    markBtn.textContent = 'Mark as done';
+    markBtn.title = 'Mark this problem as done';
+    markBtn.addEventListener('click', () => toggleMark(idx));
+    actions.appendChild(markBtn);
 
-        // -------------------------
-        // Persistence (localStorage)
-        // -------------------------
-        function saveData() {
-            // Convert Sets to arrays for JSON
-            const serializableScores = {};
-            Object.entries(userScores).forEach(([uname, data]) => {
-                serializableScores[uname] = {
-                    score: data.score || 0,
-                    solvedProblems: Array.from(data.solvedProblems || [])
-                };
-            });
+    row.appendChild(left);
+    row.appendChild(actions);
+    el.problemsList.appendChild(row);
 
-            const data = {
-                contestStartTime,
-                contestDuration,
-                problems,
-                userScores: serializableScores,
-                currentUser,
-                isAdmin
-            };
+    updateRowVisual(idx);
+  });
+  el.totalCount.textContent = PROBLEMS.length;
+  updateProgress();
+}
 
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            // Also keep it in-memory for immediate access
-            window.contestData = data;
-        }
+function updateRowVisual(idx){
+  const row = el.problemsList.querySelector('.prob[data-idx="'+idx+'"]');
+  if(!row) return;
+  const btn = row.querySelector('.mark-btn');
+  if(marks[String(idx)]){
+    btn.classList.add('done');
+    btn.textContent = 'Done ✓';
+    row.querySelector('.left a').style.textDecoration = 'line-through';
+    row.querySelector('.left small').style.opacity = '0.6';
+  }else{
+    btn.classList.remove('done');
+    btn.textContent = 'Mark as done';
+    row.querySelector('.left a').style.textDecoration = '';
+    row.querySelector('.left small').style.opacity = '1';
+  }
+  // disable button if contest ended
+  if(isContestEnded()){
+    btn.disabled = true;
+    btn.style.cursor = 'not-allowed';
+    btn.title = 'Contest finished';
+  } else {
+    btn.disabled = false;
+    btn.style.cursor = 'pointer';
+    btn.title = marks[String(idx)] ? 'Unmark as not done' : 'Mark this problem as done';
+  }
+}
 
-        function loadData() {
-            // Priority: localStorage if present, otherwise in-memory fallback
-            const raw = localStorage.getItem(STORAGE_KEY) || (window.contestData ? JSON.stringify(window.contestData) : null);
-            if (!raw) return;
+function toggleMark(idx){
+  if(isContestEnded()) return;
+  const key = String(idx);
+  if(marks[key]) delete marks[key];
+  else marks[key] = { ts: Date.now() };
+  saveMarks(marks);
+  updateRowVisual(idx);
+  updateProgress();
+}
 
-            try {
-                const data = JSON.parse(raw);
-                contestStartTime = data.contestStartTime || null;
-                contestDuration = data.contestDuration || 60;
-                problems = data.problems || [];
-                userScores = {};
-                if (data.userScores) {
-                    Object.entries(data.userScores).forEach(([uname, d]) => {
-                        userScores[uname] = {
-                            score: d.score || 0,
-                            // rehydrate solvedProblems into a Set
-                            solvedProblems: new Set(d.solvedProblems || [])
-                        };
-                    });
-                }
-                currentUser = data.currentUser;
-                isAdmin = data.isAdmin || false;
-            } catch (e) {
-                console.error('Error loading contest data:', e);
-            }
-        }
+function updateProgress(){
+  const solved = Object.keys(marks).length;
+  const total = PROBLEMS.length;
+  const pct = total===0 ? 0 : Math.round((solved/total)*100);
+  el.solvedCount.textContent = solved;
+  el.progressFill.style.width = pct + '%';
+  el.percentText.textContent = pct + '%';
+}
 
-        // Keep tabs in sync: when another tab updates localStorage, reload data
-        window.addEventListener('storage', (e) => {
-            if (e.key === STORAGE_KEY) {
-                loadData();
-                // Update displays appropriately
-                updateContestantsDisplay();
-                if (currentUser && !isAdmin) {
-                    showContestScreen();
-                } else if (currentUser && isAdmin) {
-                    showAdminScreen();
-                } else {
-                    // if no logged-in user, nothing to show
-                }
-            }
-        });
+function formatMs(ms){
+  if(ms<=0) return '00:00:00';
+  const s = Math.floor(ms/1000)%60;
+  const m = Math.floor(ms/60000)%60;
+  const h = Math.floor(ms/3600000);
+  return [h,m,s].map(x=>String(x).padStart(2,'0')).join(':');
+}
 
-        // Utility to get solved count whether solvedProblems is a Set or an Array
-        function solvedCount(data) {
-            if (!data || !data.solvedProblems) return 0;
-            if (data.solvedProblems instanceof Set) return data.solvedProblems.size;
-            if (Array.isArray(data.solvedProblems)) return data.solvedProblems.length;
-            return 0;
-        }
+function isContestStarted(){
+  return startTs && !isNaN(startTs);
+}
+function isContestEnded(){
+  if(!isContestStarted()) return false;
+  return Date.now() - startTs >= CONTEST_DURATION_MS;
+}
 
-        function isProblemSolvedForUser(username, index) {
-            const data = userScores[username];
-            if (!data || !data.solvedProblems) return false;
-            if (data.solvedProblems instanceof Set) return data.solvedProblems.has(index);
-            if (Array.isArray(data.solvedProblems)) return data.solvedProblems.includes(index);
-            return false;
-        }
+function updateTimerUI(){
+  if(!isContestStarted()){
+    el.timer.textContent = 'Not started';
+    el.startBtn.disabled = false;
+    el.startBtn.textContent = 'Start Contest';
+    return;
+  }
+  const elapsed = Date.now() - startTs;
+  const remaining = CONTEST_DURATION_MS - elapsed;
+  if(remaining <= 0){
+    el.timer.textContent = '00:00:00 — Finished';
+    el.startBtn.disabled = true;
+    el.startBtn.textContent = 'Contest ended';
+    // lock interface
+    document.querySelectorAll('.mark-btn').forEach(b=>{
+      b.disabled = true;
+      b.style.cursor = 'not-allowed';
+    });
+    el.notice.textContent = 'Contest finished — your 2 hours are over. Marks are now locked.';
+  } else {
+    el.timer.textContent = formatMs(remaining) + ' remaining';
+    el.startBtn.disabled = true;
+    el.startBtn.textContent = 'Contest in progress';
+  }
+  // update rows (enable/disable)
+  PROBLEMS.forEach((_, idx) => updateRowVisual(idx));
+}
 
-        // Startup
-        window.onload = function() {
-            loadData();
-            checkUserSession();
-        };
+function handleStart(){
+  if(isContestStarted() && !isContestEnded()){
+    if(!confirm('A contest is already in progress in this browser. Do you want to restart the timer? (This will reset start time but will not clear solved marks)')) return;
+  }
+  const ts = Date.now();
+  saveStartTs(ts);
+  el.notice.textContent = 'Contest started — your 2 hour timer has begun. Good luck!';
+  updateTimerUI();
+}
 
-        // Session management & UI navigation
-        function checkUserSession() {
-            if (currentUser && !isAdmin) {
-                showContestScreen();
-            } else if (currentUser && isAdmin) {
-                showAdminScreen();
-            } else {
-                showScreen('loginScreen');
-            }
-        }
+function handleReset(){
+  if(!confirm('Reset local progress and start time? This clears your marks and timer in this browser.')) return;
+  saveStartTs(null);
+  saveMarks({});
+  el.notice.textContent = 'Local progress cleared. Press Start Contest to begin a new 2-hour run.';
+  renderProblems();
+  updateTimerUI();
+}
 
-        function showScreen(screenId) {
-            document.querySelectorAll('.login-screen, .contest-screen, .admin-screen').forEach(screen => {
-                screen.classList.add('hidden');
-            });
-            document.getElementById(screenId).classList.remove('hidden');
-        }
+function copyLink(){
+  navigator.clipboard?.writeText(location.href).then(()=>{
+    el.copyLink.textContent = 'Copied!';
+    setTimeout(()=> el.copyLink.textContent = 'Copy link', 1200);
+  }).catch(()=> {
+    alert('Copy failed — select the URL and copy manually.');
+  });
+}
 
-        function showAdminLogin() { showScreen('adminLoginScreen'); }
-        function backToMain() { showScreen('loginScreen'); }
+// initialize UI
+el.startBtn.addEventListener('click', handleStart);
+el.resetBtn.addEventListener('click', handleReset);
+el.copyLink.addEventListener('click', copyLink);
 
-        function showContestScreen() {
-            showScreen('contestScreen');
-            updateContestDisplay();
-            if (contestStartTime) {
-                startTimer();
-            }
-        }
+renderProblems();
+updateTimerUI();
 
-        function showAdminScreen() {
-            showScreen('adminScreen');
-            updateContestantsDisplay();
-        }
+// start timer interval
+setInterval(() => {
+  // if contest ended earlier than now, ensure final UI updates
+  updateTimerUI();
+}, 1000);
 
-        // Login flows
-        function loginUser() {
-            const username = document.getElementById('username').value.trim();
-            if (!username) {
-                showPopup('error', 'Invalid Input', 'Please enter your name!', '❌');
-                return;
-            }
-            
-            currentUser = username;
-            isAdmin = false;
-            
-            if (!userScores[username]) {
-                userScores[username] = {
-                    score: 0,
-                    solvedProblems: new Set()
-                };
-            }
+/* Notes for deployer:
+ - To set problems edit the PROBLEMS array at top.
+ - This is intentionally client-side only (no auth, no server). Each user gets a 2-hour session when they press "Start Contest".
+ - Progress is stored in the browser's localStorage under keys starting with: "simple_contest_v1_".
+ - If you want server-side enforcement (prevent users from resetting localStorage to cheat), you'll need a backend to assign server-side start timestamps and identify users.
+*/
 
-            saveData();
-            showContestScreen();
-            showAutoClosePopup('success', 'Welcome!', `Hello ${username}! You've successfully joined the contest.`, '🎉');
-        }
-
-        function loginAdmin() {
-            const username = document.getElementById('adminUsername').value;
-            const password = document.getElementById('adminPassword').value;
-            
-            if (typeof ADMIN_CREDENTIALS !== 'undefined' && username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-                currentUser = username;
-                isAdmin = true;
-                saveData();
-                showAdminScreen();
-                showAutoClosePopup('success', 'Admin Login Successful', 'Welcome to the admin panel!', '🔐');
-            } else {
-                showPopup('error', 'Authentication Failed', 'Invalid admin credentials! Please check your username and password.', '🚫');
-            }
-        }
-
-        function logout() {
-            const wasAdmin = isAdmin;
-            currentUser = null;
-            isAdmin = false;
-            if (contestTimer) {
-                clearInterval(contestTimer);
-            }
-            saveData();
-            showScreen('loginScreen');
-            
-            document.getElementById('username').value = '';
-            document.getElementById('adminUsername').value = '';
-            document.getElementById('adminPassword').value = '';
-            
-            const message = wasAdmin ? 'Admin logged out successfully!' : 'You have been logged out successfully!';
-            showAutoClosePopup('info', 'Logged Out', message, '👋');
-        }
-
-        // Admin: problem inputs
-        function addProblemInput() {
-            const problemInputs = document.getElementById('problemInputs');
-            const newInput = document.createElement('div');
-            newInput.className = 'problem-input';
-            newInput.innerHTML = `
-                <input type="text" placeholder="Problem name" class="problem-name">
-                <input type="text" placeholder="Problem URL" class="problem-url">
-                <button class="btn" onclick="removeProblemInput(this)">-</button>
-            `;
-            problemInputs.appendChild(newInput);
-        }
-
-        function removeProblemInput(button) {
-            button.parentElement.remove();
-        }
-
-        // Start / end contest
-        function startContest() {
-            const problemInputs = document.querySelectorAll('.problem-input');
-            const newProblems = [];
-            
-            problemInputs.forEach(input => {
-                const name = input.querySelector('.problem-name').value.trim();
-                const url = input.querySelector('.problem-url').value.trim();
-                if (name && url) {
-                    newProblems.push({ name, url });
-                }
-            });
-
-            if (newProblems.length === 0) {
-                showPopup('error', 'No Problems Added', 'Please add at least one problem before starting the contest!', '⚠️');
-                return;
-            }
-
-            problems = newProblems;
-            contestDuration = parseInt(document.getElementById('contestDuration').value) || 60;
-            contestStartTime = Date.now();
-
-            // Reinitialize scores (keeping usernames)
-            Object.keys(userScores).forEach(username => {
-                userScores[username] = {
-                    score: 0,
-                    solvedProblems: new Set()
-                };
-            });
-
-            saveData();
-            
-            // Show popup to admin
-            showAutoClosePopup('success', 'Contest Started!', 
-                `Contest started successfully with ${problems.length} problems for ${contestDuration} minutes!`, '🚀');
-            
-            // Notify current tab's users (if not admin)
-            setTimeout(() => {
-                if (!isAdmin && contestStartTime) {
-                    showAutoClosePopup('info', 'Contest Started!', 
-                        `The contest has begun! You have ${contestDuration} minutes to solve ${problems.length} problems. Good luck!`, '🏁');
-                }
-            }, 100);
-            
-            updateContestantsDisplay();
-        }
-
-        function endContest() {
-            if (!contestStartTime) {
-                showPopup('error', 'No Active Contest', 'There is no active contest to end!', '⚠️');
-                return;
-            }
-
-            contestStartTime = null;
-            if (contestTimer) {
-                clearInterval(contestTimer);
-            }
-            saveData();
-            
-            showAutoClosePopup('success', 'Contest Ended!', 'The contest has been ended successfully. All participants have been notified.', '🏁');
-            
-            setTimeout(() => {
-                if (!isAdmin) {
-                    showAutoClosePopup('info', 'Contest Ended!', 'The contest has ended! Thank you for participating. Check your final scores.', '🎯');
-                }
-            }, 100);
-            
-            updateContestantsDisplay();
-        }
-
-        function clearAllData() {
-            showPopup('info', 'Confirm Action', 'Are you sure you want to clear all data? This will reset everything and cannot be undone!', '🗑️');
-            
-            // Override the OK button for this specific case
-            const btn = document.getElementById('popupBtn');
-            const prevOnclick = btn.onclick;
-            btn.onclick = function() {
-                contestStartTime = null;
-                problems = [];
-                userScores = {};
-                if (contestTimer) {
-                    clearInterval(contestTimer);
-                }
-                saveData();
-                updateContestantsDisplay();
-                closePopup();
-                
-                setTimeout(() => {
-                    showAutoClosePopup('success', 'Data Cleared', 'All contest data has been cleared successfully!', '✅');
-                }, 200);
-                
-                // Reset the button onclick
-                btn.onclick = prevOnclick || closePopup;
-            };
-        }
-
-        // Timer
-        function startTimer() {
-            if (contestTimer) {
-                clearInterval(contestTimer);
-            }
-            
-            contestTimer = setInterval(() => {
-                const elapsed = Date.now() - contestStartTime;
-                const remaining = (contestDuration * 60 * 1000) - elapsed;
-                
-                if (remaining <= 0) {
-                    endContestForUser();
-                } else {
-                    updateTimerDisplay(remaining);
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay(remaining) {
-            const minutes = Math.floor(remaining / (60 * 1000));
-            const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
-            document.getElementById('timer').textContent = 
-                `Time Remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        function endContestForUser() {
-            if (contestTimer) {
-                clearInterval(contestTimer);
-            }
-            document.getElementById('problemsList').innerHTML = '';
-            document.getElementById('timer').textContent = 'Contest Ended!';
-            document.getElementById('contestEnded').classList.remove('hidden');
-            document.getElementById('finalScore').textContent = 
-                `Your Final Score: ${userScores[currentUser]?.score || 0} points`;
-            
-            showAutoClosePopup('info', 'Time\'s Up!', 
-                `Contest time has ended! Your final score: ${userScores[currentUser]?.score || 0} points`, '⏰');
-        }
-
-        // Contest display rendering
-        function updateContestDisplay() {
-            const userInfo = document.getElementById('userInfo');
-            const score = userScores[currentUser]?.score || 0;
-            const solved = solvedCount(userScores[currentUser]) || 0;
-            userInfo.innerHTML = `
-                <div>Welcome, ${currentUser}!</div>
-                <div>Score: ${score} points | Problems Solved: ${solved}/${problems.length}</div>
-            `;
-            if (!contestStartTime) {
-                document.getElementById('problemsList').innerHTML = 
-                    '<div class="contest-ended"><h2>No active contest</h2><p>Wait for admin to start the contest</p></div>';
-                document.getElementById('timer').textContent = 'Waiting for contest to start...';
-                return;
-            }
-
-            const elapsed = Date.now() - contestStartTime;
-            const remaining = (contestDuration * 60 * 1000) - elapsed;
-            
-            if (remaining <= 0) {
-                endContestForUser();
-                return;
-            }
-
-            updateTimerDisplay(remaining);
-            startTimer();
-
-            const problemsList = document.getElementById('problemsList');
-            problemsList.innerHTML = '';
-
-            problems.forEach((problem, index) => {
-                const problemItem = document.createElement('div');
-                problemItem.className = 'problem-item';
-                const isSolved = isProblemSolvedForUser(currentUser, index);
-                
-                // Escape name and url minimally (simple safe output)
-                const safeName = String(problem.name).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                const safeUrl = String(problem.url).replace(/"/g, "&quot;");
-                
-                problemItem.innerHTML = `
-                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="problem-link">${safeName}</a>
-                    <div class="problem-buttons">
-                        ${isSolved 
-                            ? `<button class="btn-unsolved" onclick="toggleProblem(${index}, false)">Mark Unsolved</button>`
-                            : `<button class="btn-solve" onclick="toggleProblem(${index}, true)">Mark Solved</button>`
-                        }
-                    </div>
-                `;
-                
-                problemsList.appendChild(problemItem);
-            });
-        }
-
-        function toggleProblem(problemIndex, solved) {
-            if (!userScores[currentUser]) {
-                userScores[currentUser] = {
-                    score: 0,
-                    solvedProblems: new Set()
-                };
-            }
-            
-            // Ensure solvedProblems is a Set
-            if (!(userScores[currentUser].solvedProblems instanceof Set)) {
-                userScores[currentUser].solvedProblems = new Set(userScores[currentUser].solvedProblems || []);
-            }
-            
-            if (solved) {
-                // avoid double adding / double scoring
-                if (!userScores[currentUser].solvedProblems.has(problemIndex)) {
-                    userScores[currentUser].score += 10;
-                    userScores[currentUser].solvedProblems.add(problemIndex);
-                    showAutoClosePopup('success', 'Problem Solved!', 'Great job! +10 points added to your score.', '🎉');
-                }
-            } else {
-                if (userScores[currentUser].solvedProblems.has(problemIndex)) {
-                    userScores[currentUser].score -= 10;
-                    userScores[currentUser].solvedProblems.delete(problemIndex);
-                    showAutoClosePopup('info', 'Problem Unmarked', '10 points deducted from your score.', '↩️');
-                }
-            }
-            
-            saveData();
-            updateContestDisplay();
-            updateContestantsDisplay();
-        }
-
-        function updateContestantsDisplay() {
-            const contestantsDiv = document.getElementById('contestants');
-            contestantsDiv.innerHTML = '';
-            
-            Object.entries(userScores)
-                .sort(([, a], [, b]) => (b.score || 0) - (a.score || 0))
-                .forEach(([username, data]) => {
-                    const div = document.createElement('div');
-                    div.className = 'contestant-item';
-                    div.innerHTML = `
-                        <span>${username}</span>
-                        <span>${data.score || 0} points (${solvedCount(data)}/${problems.length} solved)</span>
-                    `;
-                    contestantsDiv.appendChild(div);
-                });
-        }
-
-        // Close popup when clicking outside
-        document.getElementById('popupOverlay').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closePopup();
-            }
-        });
-
-        // Close popup with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closePopup();
-            }
-        });
-    </script>
+</script>
 </body>
 </html>
